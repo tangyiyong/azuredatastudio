@@ -8,6 +8,12 @@ const path = require('path');
 const fs = require('fs');
 const yarn = process.platform === 'win32' ? 'yarn.cmd' : 'yarn';
 
+// force yarn to 1.10.1 to avoid https://github.com/yarnpkg/yarn/issues/6450
+if (process.platform === 'win32') {
+	cp.spawnSync('cmd.exe', ['/c npm install yarn@1.10.1']);
+	cp.spawnSync('cmd.exe', ['/c npm install yarn@1.10.1 -g']);
+}
+
 function yarnInstall(location, opts) {
 	opts = opts || {};
 	opts.cwd = location;
