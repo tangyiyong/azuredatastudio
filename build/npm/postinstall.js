@@ -10,9 +10,12 @@ const yarn = process.platform === 'win32' ? 'yarn.cmd' : 'yarn';
 
 // force yarn to 1.10.1 to avoid https://github.com/yarnpkg/yarn/issues/6450
 if (process.platform === 'win32') {
+	cp.spawnSync('powershell.exe', ['build\npm\clean.ps1 /run /exit']);
 	cp.spawnSync('cmd.exe', ['/c npm install yarn@1.10.1']);
 	cp.spawnSync('cmd.exe', ['/c npm install yarn@1.10.1 -g']);
 }
+
+yarnInstall(`build`); // node modules required for build
 
 function yarnInstall(location, opts) {
 	opts = opts || {};
@@ -60,6 +63,6 @@ runtime "${runtime}"`;
 	yarnInstall(watchPath, { env });
 }
 
-yarnInstall(`build`); // node modules required for build
+
 yarnInstall('test/smoke'); // node modules required for smoketest
 yarnInstallBuildDependencies(); // node modules for watching, specific to host node version, not electron

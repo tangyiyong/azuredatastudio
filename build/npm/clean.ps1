@@ -1,0 +1,1 @@
+get-childitem -directory -path build/node_modules/*/* -filter ".bin"  -recurse -EA SilentlyContinue | where FullName -NotLike "*\node_modules\.bin" | % { cmd /c rmdir /s /q $_.FullName }
