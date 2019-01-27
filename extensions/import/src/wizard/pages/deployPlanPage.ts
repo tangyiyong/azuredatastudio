@@ -18,16 +18,30 @@ export enum tagName {
 	Operation = 'Operation',
 }
 
+export enum attributeName {
+	Name = 'Name',
+	Value = 'Value',
+	Type = 'Type',
+	Id = 'Id'
+}
+
+export class TableObject {
+	object: string;
+	type: string;
+	dataloss: boolean;
+}
+
 export class DeployPlanPage extends DacFxConfigPage {
 
 	protected readonly wizardPage: sqlops.window.modelviewdialog.WizardPage;
 	protected readonly instance: DataTierApplicationWizard;
 	protected readonly model: DacFxDataModel;
 	protected readonly view: sqlops.ModelView;
+	private formBuilder: sqlops.FormBuilder;
 	private form: sqlops.FormContainer;
 	private table: sqlops.TableComponent;
 	private loader: sqlops.LoadingComponent;
-	private dataLossCheckbox: sqlops.CheckBoxComponent;
+	private dataLossComponent: sqlops.FormComponent;
 
 	public constructor(instance: DataTierApplicationWizard, wizardPage: sqlops.window.modelviewdialog.WizardPage, model: DacFxDataModel, view: sqlops.ModelView) {
 		super(instance, wizardPage, model, view);
@@ -36,29 +50,31 @@ export class DeployPlanPage extends DacFxConfigPage {
 	async start(): Promise<boolean> {
 		this.table = this.view.modelBuilder.table().component();
 		this.loader = this.view.modelBuilder.loadingComponent().withItem(this.table).component();
-		let dataLossCheckboxComponent = await this.createDataLossCheckbox();
+		this.dataLossComponent = await this.createDataLossCheckbox();
 
-		this.form = this.view.modelBuilder.formContainer()
+		this.formBuilder = this.view.modelBuilder.formContainer()
 			.withFormItems(
 				[
 					{
 						component: this.loader,
 						title: ''
-					},
-					dataLossCheckboxComponent
+					}
 				], {
 					horizontal: true,
-				}).component();
+				});
+		this.form = this.formBuilder.component();
 		await this.view.initializeModel(this.form);
 
 		return true;
 	}
 
 	async onPageEnter(): Promise<boolean> {
-		this.dataLossCheckbox.enabled = false;
+		this.table.data = [];
+		this.formBuilder.removeFormItem(this.dataLossComponent);
+
+		this.loader.loading = true;
 		await this.populateTable();
 		this.loader.loading = false;
-		this.dataLossCheckbox.enabled = true;
 		return true;
 	}
 
@@ -66,17 +82,14 @@ export class DeployPlanPage extends DacFxConfigPage {
 		let data = [];
 
 		let report = await this.instance.upgradePlan();
-		console.error('report is ' + report);
 
 		data = [];
-		let alerts = new Map<string, string>();
+		let dataLossAlerts = new Map<string, string>();
 		let currentOperation = '';
-		let object = '';
-		let type = '';
 		let dataIssueAlert = false;
 		let issue = '';
-		let dataloss = false;
 		let currentTag: tagName;
+		let currentTableObj: TableObject;
 
 		let p = new parser.Parser({
 			onopentagname(name) {
@@ -84,44 +97,62 @@ export class DeployPlanPage extends DacFxConfigPage {
 					currentTag = tagName.Alert;
 				} else if (name === 'Operation') {
 					currentTag = tagName.Operation;
+					currentTableObj = new TableObject();
 				}
 			},
 			onattribute: function (name, value) {
-				if (name === 'Name') {
-					if (currentTag === tagName.Alert) {
-						if (value === 'DataIssue') {
-							dataIssueAlert = true;
+				if (currentTag === tagName.Alert) {
+					switch (name) {
+						case attributeName.Name: {
+							// only care about showing data loss alerts
+							if (value === 'DataIssue') {
+								dataIssueAlert = true;
+							}
+							break;
 						}
-					} else {
-						currentOperation = value;
+						case attributeName.Value: {
+							if (dataIssueAlert) {
+								issue = value;
+							}
+						}
+						case attributeName.Id: {
+							if (dataIssueAlert) {
+								dataLossAlerts.set(value, issue);
+							}
+							break;
+						}
 					}
-				} else if (name === 'Value') {
-					if (currentTag === tagName.Alert && dataIssueAlert) {
-						issue = value;
-					} else {
-						object = value;
-					}
-				} else if (name === 'Type') {
-					type = value;
-				} else if (name === 'Id') {
-					if (currentTag === tagName.Alert && dataIssueAlert) {
-						alerts.set(value, issue);
-					} else if (currentTag === tagName.Operation) {
-						if (alerts.get(value)) {
-							dataloss = true;
+				} else if (currentTag === tagName.Operation) {
+					switch (name) {
+						case attributeName.Name: {
+							currentOperation = value;
+							break;
+						}
+						case attributeName.Value: {
+							currentTableObj.object = value;
+							break;
+						}
+						case attributeName.Type: {
+							currentTableObj.type = value;
+							break;
+						}
+						case attributeName.Id: {
+							if (dataLossAlerts.get(value)) {
+								currentTableObj.dataloss = true;
+							}
+							break;
 						}
 					}
 				}
 			},
 			onclosetag: function (name) {
+				// add table entry for the operation item
 				if (name === 'Item') {
-					let isDataLoss = dataloss ? 'true' : '';
-					let op = 'Operation: ' + currentOperation;
-					let objtype = 'Type: ' + type;
-					let obj = 'Object: ' + object;
-					data.push([isDataLoss, op + ', ' + objtype + ', ' + obj]);
-
-					dataloss = false;
+					let isDataLoss = currentTableObj.dataloss ? '✔' : '';
+					let operation = 'Operation: ' + currentOperation;
+					let objtype = 'Type: ' + currentTableObj.type;
+					let obj = 'Object: ' + currentTableObj.object;
+					data.push([isDataLoss, operation + ', ' + objtype + ', ' + obj]);
 				}
 			}
 		}, { xmlMode: true, decodeEntities: true });
@@ -134,25 +165,28 @@ export class DeployPlanPage extends DacFxConfigPage {
 			width: 700,
 			height: 300
 		});
+
+		if (dataLossAlerts.size > 0) {
+			this.formBuilder.addFormItem(this.dataLossComponent, { horizontal: true });
+		}
 	}
 
 	private async createDataLossCheckbox(): Promise<sqlops.FormComponent> {
-		this.dataLossCheckbox = this.view.modelBuilder.checkBox()
+		let dataLossCheckbox = this.view.modelBuilder.checkBox()
 			.withProperties({
 				label: localize('dacFx.dataLossCheckbox', 'Proceed despite possible data loss'),
 			}).component();
 
-		this.dataLossCheckbox.onChanged(() => {
-
+		dataLossCheckbox.onChanged(() => {
 		});
 
+		dataLossCheckbox.checked = true;
 		return {
-			component: this.dataLossCheckbox,
+			component: dataLossCheckbox,
 			title: '',
 			required: true
 		};
 	}
-
 
 	public setupNavigationValidator() {
 		this.instance.registerNavigationValidator(() => {
