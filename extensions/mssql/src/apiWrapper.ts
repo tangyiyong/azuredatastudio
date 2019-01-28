@@ -21,6 +21,10 @@ export class ApiWrapper {
 		return sqlops.dataprotocol.registerConnectionProvider(provider);
 	}
 
+	public registerObjectExplorerProvider(provider: sqlops.ObjectExplorerProvider): vscode.Disposable {
+        return sqlops.dataprotocol.registerObjectExplorerProvider(provider);
+    }
+
 	public registerObjectExplorerNodeProvider(provider: sqlops.ObjectExplorerNodeProvider): vscode.Disposable {
 		return sqlops.dataprotocol.registerObjectExplorerNodeProvider(provider);
 	}
@@ -33,12 +37,39 @@ export class ApiWrapper {
 		return sqlops.dataprotocol.registerFileBrowserProvider(provider);
 	}
 
+	public registerCapabilitiesServiceProvider(provider: sqlops.CapabilitiesProvider): vscode.Disposable {
+        return sqlops.dataprotocol.registerCapabilitiesServiceProvider(provider);
+    }
+
+	public registerModelViewProvider(widgetId: string, handler: (modelView: sqlops.ModelView) => void): void {
+        return sqlops.ui.registerModelViewProvider(widgetId, handler);
+    }
+
+	public createDialog(title: string): sqlops.window.modelviewdialog.Dialog {
+        return sqlops.window.modelviewdialog.createDialog(title);
+	}
+
+	public openDialog(dialog: sqlops.window.modelviewdialog.Dialog): void {
+        return sqlops.window.modelviewdialog.openDialog(dialog);
+    }
+
 	public registerTaskHandler(taskId: string, handler: (profile: sqlops.IConnectionProfile) => void): void {
 		sqlops.tasks.registerTask(taskId, handler);
 	}
 
-	// VSCode APIs
+	public startBackgroundOperation(operationInfo: sqlops.BackgroundOperationInfo): void {
+        sqlops.tasks.startBackgroundOperation(operationInfo);
+	}
 
+	public getActiveConnections(): Thenable<sqlops.connection.Connection[]> {
+        return sqlops.connection.getActiveConnections();
+	}
+
+	public getCurrentConnection(): Thenable<sqlops.connection.Connection> {
+        return sqlops.connection.getCurrentConnection();
+    }
+
+	// VSCode APIs
 	public executeCommand(command: string, ...rest: any[]): Thenable<any> {
 		return vscode.commands.executeCommand(command, ...rest);
 	}
@@ -46,6 +77,32 @@ export class ApiWrapper {
 	public registerCommand(command: string, callback: (...args: any[]) => any, thisArg?: any): vscode.Disposable {
 		return vscode.commands.registerCommand(command, callback, thisArg);
 	}
+
+	/**
+     * Get the configuration for a extensionName
+     * @param extensionName The string name of the extension to get the configuration for
+     * @param resource The optional URI, as a URI object or a string, to use to get resource-scoped configurations
+     */
+    public getConfiguration(extensionName?: string, resource?: vscode.Uri | string): vscode.WorkspaceConfiguration {
+        if (typeof resource === 'string') {
+            try {
+                resource = this.parseUri(resource);
+            } catch (e) {
+                resource = undefined;
+            }
+        } else if (!resource) {
+            // Fix to avoid adding lots of errors to debug console. Expects a valid resource or null, not undefined
+            resource = null;
+        }
+        return vscode.workspace.getConfiguration(extensionName, resource as vscode.Uri);
+	}
+
+	/**
+     * Parse uri
+     */
+    public parseUri(uri: string): vscode.Uri {
+        return vscode.Uri.parse(uri);
+    }
 
 	public showOpenDialog(options: vscode.OpenDialogOptions): Thenable<vscode.Uri[] | undefined> {
 		return vscode.window.showOpenDialog(options);
@@ -90,4 +147,11 @@ export class ApiWrapper {
 		return vscode.workspace.workspaceFolders;
 	}
 
+	public createOutputChannel(name: string): vscode.OutputChannel {
+        return vscode.window.createOutputChannel(name);
+	}
+
+	public createTab(title: string): sqlops.window.modelviewdialog.DialogTab {
+        return sqlops.window.modelviewdialog.createTab(title);
+    }
 }

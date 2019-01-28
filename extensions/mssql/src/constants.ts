@@ -11,7 +11,13 @@ export const serviceCrashButton = 'View Known Issues';
 export const serviceCrashLink = 'https://github.com/Microsoft/vscode-mssql/wiki/SqlToolsService-Known-Issues';
 export const extensionConfigSectionName = 'mssql';
 
+// CONFIG VALUES ///////////////////////////////////////////////////////////
+export const sqlConfigSectionName = 'sql';
+export const extensionOutputChannel = 'SQL Server 2019 Preview';
+export const configLogDebugInfo = 'logDebugInfo';
+
 // DATA PROTOCOL VALUES ///////////////////////////////////////////////////////////
+export const hadoopKnoxProviderName = 'HADOOP_KNOX';
 export const mssqlClusterProviderName = 'mssqlCluster';
 export const hadoopKnoxEndpointName = 'Knox';
 export const protocolVersion = '1.0';
@@ -25,6 +31,8 @@ export const groupIdName = 'groupId';
 export const sqlProviderName = 'MSSQL';
 export const dataService = 'Data Services';
 
+
+export const outputChannelName = 'dataManagement';
 export const hdfsHost = 'host';
 export const hdfsUser = 'user';
 export const UNTITLED_SCHEMA = 'untitled';
@@ -36,6 +44,18 @@ export const hdfsRootPath = '/';
 
 export const clusterEndpointsProperty = 'clusterEndpoints';
 export const isBigDataClusterProperty = 'isBigDataCluster';
+
+// SPARK JOB SUBMISSION //////////////////////////////////////////////////////////
+export const livySubmitSparkJobCommand = 'livy.cmd.submitSparkJob';
+export const livySubmitSparkJobFromFileCommand = 'livy.cmd.submitFileToSparkJob';
+export const livySubmitSparkJobTask = 'livy.task.submitSparkJob';
+export const livyOpenSparkHistory = 'livy.task.openSparkHistory';
+export const livyOpenYarnHistory = 'livy.task.openYarnHistory';
+export const livySubmitPath = '/gateway/default/livy/v1/batches';
+export const livyTimeInMSForCheckYarnApp = 1000;
+export const livyRetryTimesForCheckYarnApp = 20;
+export const sparkJobFileSelectorButtonWidth = '30px';
+export const sparkJobFileSelectorButtonHeight = '30px';
 
 // SERVICE NAMES //////////////////////////////////////////////////////////
 export const ObjectExplorerService = 'objectexplorer';

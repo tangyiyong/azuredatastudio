@@ -5,6 +5,8 @@
 'use strict';
 
 import * as sqlops from 'sqlops';
+import * as vscode from 'vscode';
+import * as Constants from './constants';
 
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -172,6 +174,20 @@ export function verifyPlatform(): Thenable<boolean> {
 	}
 }
 
+/**
+ * Helper to log messages to the developer console if enabled
+ * @param msg Message to log to the console
+ */
+export function logDebug(msg: any): void {
+    let config = vscode.workspace.getConfiguration(Constants.extensionConfigSectionName);
+    let logDebugInfo = config[Constants.configLogDebugInfo];
+    if (logDebugInfo === true) {
+        let currentTime = new Date().toLocaleTimeString();
+        let outputMsg = '[' + currentTime + ']: ' + msg ? msg.toString() : '';
+        console.log(outputMsg);
+    }
+}
+
 export function getErrorMessage(error: Error | string): string {
 	return (error instanceof Error) ? error.message : error;
 }
@@ -182,4 +198,11 @@ export function isObjectExplorerContext(object: any): object is sqlops.ObjectExp
 
 export function getUserHome(): string {
 	return process.env.HOME || process.env.USERPROFILE;
+}
+
+export function isValidNumber(maybeNumber: any) {
+    return maybeNumber !== undefined
+        && maybeNumber !== null
+        && maybeNumber !== ''
+        && !isNaN(Number(maybeNumber.toString()));
 }

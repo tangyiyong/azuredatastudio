@@ -71,20 +71,20 @@ export class TasksWidget extends DashboardWidget implements IDashboardWidget, On
 		let tasksConfig = this._config.widget[selector] as Array<string | ITask>;
 		let tasks = TaskRegistry.getTasks();
 
-		if (types.isArray(tasksConfig) && tasksConfig.length > 0) {
-			tasks = tasksConfig.map(i => {
-				if (types.isString(i)) {
-					if (tasks.includes(i)) {
-						return i;
-					}
-				} else {
-					if (tasks.includes(i.name) && contextKeyService.contextMatchesRules(ContextKeyExpr.deserialize(i.when))) {
-						return i.name;
-					}
-				}
-				return undefined;
-			}).filter(i => !!i);
-		}
+		// if (types.isArray(tasksConfig) && tasksConfig.length > 0) {
+		// 	tasks = tasksConfig.map(i => {
+		// 		if (types.isString(i)) {
+		// 			if (tasks.includes(i)) {
+		// 				return i;
+		// 			}
+		// 		} else {
+		// 			if (tasks.includes(i.name) && contextKeyService.contextMatchesRules(ContextKeyExpr.deserialize(i.when))) {
+		// 				return i.name;
+		// 			}
+		// 		}
+		// 		return undefined;
+		// 	}).filter(i => !!i);
+		// }
 
 		this._tasks = tasks.map(i => MenuRegistry.getCommand(i)).filter(v => !!v);
 	}

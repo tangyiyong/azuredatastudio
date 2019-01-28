@@ -22,9 +22,15 @@ import { AppContext } from './appContext';
 import { ApiWrapper } from './apiWrapper';
 import { MssqlObjectExplorerNodeProvider } from './objectExplorerNodeProvider/objectExplorerNodeProvider';
 
+import ControllerBase from './controllers/controllerBase';
+import MainController from './controllers/mainController';
+
+
 const baseConfig = require('./config.json');
 const outputChannel = vscode.window.createOutputChannel(Constants.serviceName);
 const statusView = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+
+let controllers: ControllerBase[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
 	// lets make sure we support this platform first
@@ -89,7 +95,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		languageClient.start();
 		credentialsStore.start();
 		resourceProvider.start();
-		let nodeProvider = new MssqlObjectExplorerNodeProvider(new AppContext(context, new ApiWrapper()));
+
+		// Start the main controller
+		let appContext = new AppContext(context, new ApiWrapper());
+		let mainController = new MainController(appContext);
+		controllers.push(mainController);
+		context.subscriptions.push(mainController);
+		mainController.activate();
+
+		let nodeProvider = new MssqlObjectExplorerNodeProvider(appContext);
 		sqlops.dataprotocol.registerObjectExplorerNodeProvider(nodeProvider);
 	}, e => {
 		Telemetry.sendTelemetryEvent('ServiceInitializingFailed');
@@ -142,6 +156,9 @@ function generateHandleServerProviderEvent() {
 
 // this method is called when your extension is deactivated
 export function deactivate(): void {
+	for (let controller of controllers) {
+        controller.deactivate();
+    }
 }
 
 class CustomOutputChannel implements vscode.OutputChannel {
