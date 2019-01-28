@@ -78,7 +78,7 @@ export class SelectOperationPage extends BasePage {
 			this.instance.wizard.addPage(deployPlanPage.wizardPage, 2);
 			let actionPage = this.instance.pages.get('deployAction');
 			this.instance.wizard.addPage(actionPage.wizardPage, 3);
-			this.addSummaryPage(3);
+			this.addSummaryPage(4);
 
 			// change button text and operation
 			this.instance.setDoneButton(Operation.deploy);

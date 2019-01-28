@@ -39,7 +39,14 @@ export enum Operation {
 export enum DeployOperationPath {
 	selectOperation,
 	deployOptions,
+	deployPlan,
 	deployAction,
+	summary
+}
+
+export enum DeployNewOperationPath {
+	selectOperation,
+	deployOptions,
 	summary
 }
 
@@ -332,10 +339,12 @@ export class DataTierApplicationWizard {
 					break;
 				}
 			}
-		} else if ((this.selectedOperation === Operation.deploy || this.selectedOperation === Operation.generateDeployScript) && idx === DeployOperationPath.deployAction) {
-			page = this.pages.get('deployAction');
 		} else if (this.isSummaryPage(idx)) {
 			page = this.pages.get('summary');
+		}else if ((this.selectedOperation === Operation.deploy || this.selectedOperation === Operation.generateDeployScript) && idx === DeployOperationPath.deployPlan) {
+			page = this.pages.get('deployPlan');
+		}else if ((this.selectedOperation === Operation.deploy || this.selectedOperation === Operation.generateDeployScript) && idx === DeployOperationPath.deployAction) {
+			page = this.pages.get('deployAction');
 		}
 
 		return page;
@@ -345,14 +354,15 @@ export class DataTierApplicationWizard {
 		return this.selectedOperation === Operation.import && idx === ImportOperationPath.summary
 			|| this.selectedOperation === Operation.export && idx === ExportOperationPath.summary
 			|| this.selectedOperation === Operation.extract && idx === ExtractOperationPath.summary
+			|| this.selectedOperation === Operation.deploy && !this.model.upgradeExisting && idx === DeployNewOperationPath.summary
 			|| (this.selectedOperation === Operation.deploy || this.selectedOperation === Operation.generateDeployScript) && idx === DeployOperationPath.summary;
 	}
 
-	public async upgradePlan(): Promise<string> {
+	public async generateDeployPlan(): Promise<string> {
 		let service = await DataTierApplicationWizard.getService(this.model.server.providerName);
 		let ownerUri = await sqlops.connection.getUriForConnection(this.model.server.connectionId);
 
-		let result = await service.upgradePlan(this.model.filePath, this.model.database, ownerUri, sqlops.TaskExecutionMode.execute);
+		let result = await service.generateDeployPlan(this.model.filePath, this.model.database, ownerUri, sqlops.TaskExecutionMode.execute);
 
 		if (!result || !result.success) {
 			vscode.window.showErrorMessage(

@@ -13,7 +13,7 @@ import { DacFxConfigPage } from '../api/dacFxConfigPage';
 
 const localize = nls.loadMessageBundle();
 
-export enum tagName {
+export enum reportSection {
 	Alert = 'Alert',
 	Operation = 'Operation',
 }
@@ -79,29 +79,26 @@ export class DeployPlanPage extends DacFxConfigPage {
 	}
 
 	private async populateTable() {
+		let report = await this.instance.generateDeployPlan();
 		let data = [];
-
-		let report = await this.instance.upgradePlan();
-
-		data = [];
 		let dataLossAlerts = new Map<string, string>();
 		let currentOperation = '';
 		let dataIssueAlert = false;
 		let issue = '';
-		let currentTag: tagName;
+		let currentReportSection: reportSection;
 		let currentTableObj: TableObject;
 
 		let p = new parser.Parser({
 			onopentagname(name) {
 				if (name === 'Alert') {
-					currentTag = tagName.Alert;
+					currentReportSection = reportSection.Alert;
 				} else if (name === 'Operation') {
-					currentTag = tagName.Operation;
+					currentReportSection = reportSection.Operation;
 					currentTableObj = new TableObject();
 				}
 			},
 			onattribute: function (name, value) {
-				if (currentTag === tagName.Alert) {
+				if (currentReportSection === reportSection.Alert) {
 					switch (name) {
 						case attributeName.Name: {
 							// only care about showing data loss alerts
@@ -122,7 +119,7 @@ export class DeployPlanPage extends DacFxConfigPage {
 							break;
 						}
 					}
-				} else if (currentTag === tagName.Operation) {
+				} else if (currentReportSection === reportSection.Operation) {
 					switch (name) {
 						case attributeName.Name: {
 							currentOperation = value;
@@ -161,7 +158,7 @@ export class DeployPlanPage extends DacFxConfigPage {
 
 		this.table.updateProperties({
 			data: data,
-			columns: ['Data Loss', 'Action'],
+			columns: [localize('dacfx.dataLossColumn', 'Data Loss'), localize('dacfx.actionColumn', 'Action')],
 			width: 700,
 			height: 300
 		});
