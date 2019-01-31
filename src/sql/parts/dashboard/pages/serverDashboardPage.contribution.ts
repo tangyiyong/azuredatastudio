@@ -81,7 +81,7 @@ let defaultVal = [
 		},
 		gridItemConfig: {
 			sizex: 1,
-			sizey: 1
+			sizey: 3
 		}
 	},
 	{
