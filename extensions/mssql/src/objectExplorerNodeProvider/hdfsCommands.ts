@@ -52,6 +52,7 @@ export async function getNode<T extends TreeNode>(context: ICommandViewContext |
 	} else if (context && context.type === constants.ObjectExplorerService) {
 		let oeProvider = appContext.getService<MssqlObjectExplorerNodeProvider>(constants.ObjectExplorerService);
 		if (oeProvider) {
+
 			node = await oeProvider.findNodeForContext<T>(context.explorerContext);
 		}
 	} else {

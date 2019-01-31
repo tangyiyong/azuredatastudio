@@ -13,7 +13,7 @@ const localize = nls.loadMessageBundle();
 import * as constants from '../constants';
 import * as LocalizedConstants from '../localizedConstants';
 import * as utils from '../utils';
-import { IFileSource, HdfsFileSource, IHdfsOptions, IRequestParams, FileSourceFactory } from './fileSources';
+import { IFileSource, IHdfsOptions, IRequestParams, FileSourceFactory } from './fileSources';
 
 function appendIfExists(uri: string, propName: string, propValue: string): string {
 	if (propValue) {
@@ -131,7 +131,8 @@ export class Connection {
 	 * preference to the built in port.
 	 */
 	private ensureHostAndPort(): void {
-		this._host = this.connectionInfo.options[constants.hostPropName];
+		this._host = this.connectionInfo.options[constants.hostPropName] ||
+					 this.connectionInfo.options[constants.SERVER];
 		this._knoxPort = Connection.getKnoxPortOrDefault(this.connectionInfo);
 		// determine whether the host has either a ',' or ':' in it
 		this.setHostAndPort(',');
@@ -195,7 +196,7 @@ export class Connection {
 		let otherConnection = new Connection(connectionInfo);
 		return otherConnection.groupId === this.groupId
 			&& otherConnection.host === this.host
-			&& otherConnection.knoxport === this.knoxport
+			&& otherConnection.knoxport === `${this.knoxport}`
 			&& otherConnection.user === this.user;
 	}
 
@@ -219,4 +220,19 @@ export class Connection {
 		}
 		return factory.createHdfsFileSource(options);
 	}
+
+	public async getCredential(): Promise<void> {
+        try {
+            let credentials = await sqlops.connection.getCredentials(this.connectionId);
+            if (credentials) {
+                this.connectionInfo.options = Object.assign(this.connectionInfo.options, credentials);
+            } else {
+                // TODO should pop the connectionDialog like click Manage contextmenu.
+            }
+        } catch (error) {
+            let another = error;
+            // swallow this as either it was integrated auth or we will fail later with login failed,
+            // which is a good error that makes sense to the user
+        }
+    }
 }

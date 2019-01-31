@@ -5,17 +5,17 @@
 'use strict';
 
 import * as sqlops from 'sqlops';
-
+import * as vscode from 'vscode';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as os from 'os';
-import {workspace, WorkspaceConfiguration} from 'vscode';
 import * as findRemoveSync from 'find-remove';
 
 const configTracingLevel = 'tracingLevel';
 const configLogRetentionMinutes = 'logRetentionMinutes';
 const configLogFilesRemovalLimit = 'logFilesRemovalLimit';
 const extensionConfigSectionName = 'mssql';
+const configLogDebugInfo = 'logDebugInfo';
 
 // The function is a duplicate of \src\paths.js. IT would be better to import path.js but it doesn't
 // work for now because the extension is running in different process.
@@ -33,8 +33,8 @@ export function removeOldLogFiles(prefix: string) : JSON {
 	return findRemoveSync(getDefaultLogDir(), {prefix: `${prefix}_`,  age: {seconds: getConfigLogRetentionSeconds()}, limit: getConfigLogFilesRemovalLimit()});
 }
 
-export function getConfiguration(config: string = extensionConfigSectionName) : WorkspaceConfiguration {
-	return workspace.getConfiguration(extensionConfigSectionName);
+export function getConfiguration(config: string = extensionConfigSectionName) : vscode.WorkspaceConfiguration {
+	return vscode.workspace.getConfiguration(extensionConfigSectionName);
 }
 
 export function getConfigLogFilesRemovalLimit() : number {
@@ -182,4 +182,25 @@ export function isObjectExplorerContext(object: any): object is sqlops.ObjectExp
 
 export function getUserHome(): string {
 	return process.env.HOME || process.env.USERPROFILE;
+}
+
+export function isValidNumber(maybeNumber: any) {
+    return maybeNumber !== undefined
+        && maybeNumber !== null
+        && maybeNumber !== ''
+        && !isNaN(Number(maybeNumber.toString()));
+}
+
+/**
+ * Helper to log messages to the developer console if enabled
+ * @param msg Message to log to the console
+ */
+export function logDebug(msg: any): void {
+    let config = vscode.workspace.getConfiguration(extensionConfigSectionName);
+    let logDebugInfo = config[configLogDebugInfo];
+    if (logDebugInfo === true) {
+        let currentTime = new Date().toLocaleTimeString();
+        let outputMsg = '[' + currentTime + ']: ' + msg ? msg.toString() : '';
+        console.log(outputMsg);
+    }
 }

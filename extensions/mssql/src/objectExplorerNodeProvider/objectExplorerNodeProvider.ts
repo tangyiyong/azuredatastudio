@@ -35,7 +35,7 @@ export class MssqlObjectExplorerNodeProvider extends ProviderBase implements sql
 	constructor(private appContext: AppContext) {
 		super();
 
-		this.sessionMap = new Map();
+		this.sessionMap = new Map<string, Session>();
 		this.appContext.registerService<MssqlObjectExplorerNodeProvider>(constants.ObjectExplorerService, this);
 	}
 
